@@ -1,0 +1,194 @@
+#!/usr/bin/env ruby
+
+# A few helpful tips about the Rules file:
+#
+# * The string given to #compile and #route are matching patterns for
+#   identifiers--not for paths. Therefore, you can’t match on extension.
+#
+# * The order of rules is important: for each item, only the first matching
+#   rule is applied.
+#
+# * Item identifiers start and end with a slash (e.g. “/about/” for the file
+#   “content/about.html”). To select all children, grandchildren, … of an
+#   item, use the pattern “/about/*/”; “/about/*” will also select the parent,
+#   because “*” matches zero or more characters.
+
+# -----------------------------------------------------------------------------
+# Preprocessors -
+#   These are executed before the compilation of articles/posts begins.
+# -----------------------------------------------------------------------------
+preprocess do
+  # authors may unpublish items by setting meta attribute publish: false
+  # here we remove such articles from generating
+  items.delete_if { |item| item[:published] == false }
+
+  # Every post has categories and a publication date. Following 2 function
+  # calls will generate pages for categories and archives.
+  create_category_pages
+  create_archive_pages
+
+  # the variable page_size is defined in config.yaml, this is the maximum
+  # number of posts displayed per page
+  def paginate(num)
+    l = sorted_articles
+    npages = (l.length - 1) / num
+
+    for i in 1..(npages)
+      create_old_page "/page/", i, npages, num
+    end
+  end
+
+  paginate @config[:page_size]
+
+end
+
+# -----------------
+# static css {{{
+# -----------------
+compile '/static/css/*' do
+  # don’t filter or layout
+end
+
+route '/static/css/*' do
+  item.identifier.chop + '.' + item[:extension]
+end
+# static css }}}
+
+# -----------------
+# static js {{{
+# -----------------
+compile '/static/js/*' do
+  # don’t filter or layout
+end
+
+route '/static/js/*' do
+  item.identifier.chop + '.' + item[:extension]
+end
+# static css }}}
+
+# -----------------
+# Blog post imagery {{{
+# -----------------
+compile '/images/posts/*', :rep => :thumbnail do
+  # make images fit the blog's size
+  if item[:extension] == 'png' then
+    filter :thumbnailize, :width => 580, :height => 800
+    if item[:extension] == "png"
+      filter :pngcrush, :level => 7
+    end
+  end
+end
+
+compile '/images/*/' do
+end
+
+route '/images/posts/*', :rep => :thumbnail do
+  item.identifier.chop + '-thumbnail.' + item[:extension]
+end
+
+route '/images/*/' do
+  item.identifier.chop + '.' + item[:extension]
+end
+# blog post imagery }}}
+
+# -----------------
+# posts {{{
+# -----------------
+
+compile '/posts/*' do
+  #filter :kramdown
+  filter :rdiscount, :extensions => %w( strict smart )
+  filter :colorize_syntax, :default_colorizer => :pygmentize
+  #filter :colorize_syntax, :default_colorizer => :pygmentsrb
+  layout 'posts'
+end
+
+route '/posts/*' do
+  y,m,d,slug = /([0-9]+)\-([0-9]+)\-([0-9]+)\-([^\/]+)/
+  .match(item.identifier).captures
+  link_cat = item[:link_cat]
+
+  "/#{link_cat}/#{slug}/index.html"
+end
+# posts }}}
+
+# -------------------------------------
+# Categories
+# -------------------------------------
+compile '/categories/*/' do
+  filter :kramdown
+  layout 'category'
+end
+
+route '/categories/*/' do
+  item.identifier.chop + '.html'
+end
+
+compile '/archives/*/' do
+  filter :kramdown
+  layout 'archives'
+end
+
+route '/archives/*/' do
+  item.identifier.chop + '.html'
+end
+
+# -------------------------------------
+# Archives
+# -------------------------------------
+route '/archives/' do
+  '/archives/index.html'
+end
+
+route '/categories/' do
+  '/categories/index.html'
+end
+
+# -------------------------------------
+# RSS Feeds
+# -------------------------------------
+compile '/rss/' do
+	filter :erb unless rep.binary? # e.g. rss.png image
+end
+route '/rss/' do
+	item.identifier.chop + '.xml'
+end
+
+# -------------------------------------
+# Files, Favicons and robots.txt file.
+# -------------------------------------
+
+route /\/(files|favicon|robots)\// do
+	item.identifier.chop + ".#{item[:extension]}"
+end
+
+# -------------------------------------
+# Custom error pages for github.
+# -------------------------------------
+route /\/(403|404|500)\// do
+	item.identifier.chop + ".#{item[:extension]}"
+end
+
+# -------------------------------------
+# Regex matching for everything else
+# -------------------------------------
+compile '*' do
+  if item.binary?
+    # don’t filter binary items
+  else
+    filter :erb
+    layout 'default'
+  end
+end
+
+route '*' do
+  if item.binary?
+    # Write item with identifier /foo/ to /foo.ext
+    item.identifier.chop + '.' + item[:extension]
+  else
+    # Write item with identifier /foo/ to /foo/index.html
+    item.identifier + 'index.html'
+  end
+end
+
+layout '*', :erb

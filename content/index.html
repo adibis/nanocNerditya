@@ -1,0 +1,18 @@
+---
+title: Home
+---
+<% pages = sorted_articles.slice(0, @config[:page_size]) %>
+  <% pages.each do |post| %>
+    <div class="page-header">
+      <h1><%= link_to post[:title], post.path %></h1>
+    </div>
+    <%= get_post_start(post) %>
+  <% end %>
+  <div class="row">
+    <!--<div class="col-md-4 col-md-offset-4" style="text-align:center;"><a href="/archives/">- Blog Archives -</a></div>-->
+    <% if articles.length > pages.length %>
+      <ul class="pager">
+        <li class="previous"><a href="/page/2/">&larr; Older</a></li>
+      </ul>
+<% end %>
+  </div>

@@ -1,0 +1,27 @@
+<% render 'default' do %>
+  <div class="page-header">
+    <h1><%= item[:title] %></h1>
+  </div>
+  <p class="lead">
+    <small><i class="fa fa-tags"></i></small>&nbsp;&nbsp;<%= link_categories(@item[:categories].map{|x| x.downcase}).join(', ') %>
+    <span class="pull-right">
+    <a href="https://plus.google.com/share?=http://nerditya.com<%= item.path %>"><i class="fa fa-google-plus-square"></i></a>
+    <a href="https://twitter.com/share?url=http://nerditya.com<%= item.path %>"><i class="fa fa-twitter-square"></i></a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=http://nerditya.com<%= item.path %>"><i class="fa fa-facebook-square"></i></a>
+    </span>
+  </p>
+    <%= yield %>
+  <hr>
+  <div class="well">
+    <div class="media">
+      <a class="pull-left" href="http://adityashevade.com/">
+        <img class="img-circle" src="/static/img/avatar.jpg" width="64" alt="Nerditya">
+      </a>
+      <div class="media-body">
+        <h4 class="media-heading">Aditya Shevade</h4>
+          <p class="small">Coffee geek, music fiend, photographer, engineer, geek...</p>
+      </div>
+    </div>
+  </div>
+  <div data_title="<%= item[:title] %>" id="isso-thread"></div>
+<% end %>

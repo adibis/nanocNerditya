@@ -1,0 +1,12 @@
+---
+title: Archives
+---
+<h2>Archives</h2>
+<hr>
+<div class="row">
+<ul class="nav nav-pills nav-stacked">
+<% articles_by_month.each do |m| %>
+  <li><%= month_link_with_count(m[0], m[1].length) %></li>
+<% end %>
+</ul>
+</div>

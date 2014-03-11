@@ -1,0 +1,12 @@
+---
+title: Categories
+---
+<h2>Categories</h2>
+<hr>
+<div class="row">
+<ul class="nav nav-pills nav-stacked">
+<% articles_by_category.each do |m| %>
+  <li><%= category_link_with_count(m[0], m[1].length) %></li>
+<% end %>
+</ul>
+</div>
